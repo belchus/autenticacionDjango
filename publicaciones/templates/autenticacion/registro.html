@@ -1,0 +1,14 @@
+{% extends "publicaciones/base.html" %}
+{% block title %}
+Crear cuenta
+{% endblock %}
+{% block content %}    
+
+<h1>Registrate</h1>
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Registrarme</button>
+</form>
+<p>¿Ya tenes cuenta? <a href="{% url 'login' %}">Iniciar sesion</a></p>
+{% endblock %}

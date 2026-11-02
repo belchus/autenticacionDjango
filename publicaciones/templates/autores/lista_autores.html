@@ -1,0 +1,18 @@
+{% extends "publicaciones/base.html" %}
+{% block title %}
+Autores
+{% endblock %}
+{% block content %}    
+<a href="{% url 'crear_autor' %}">+ Crear autor</a>
+<form method="GET">
+    <input type="text" name="buscar" placeholder="Buscar autor..." value="{{ request.GET.buscar|default:'' }}">
+    <button type="submit">Buscar</button>
+</form>
+{% for autor in autores %}
+<h2>{{autor.username}}</h2>
+<p>{{autor.nombre}} {{autor.apellido}} </p>
+<a href="{% url 'perfil_autor' autor.id %}">Ver perfil</a>
+{% empty %}
+ <p>no se encontraron autores</p>
+{% endfor %}
+{% endblock %}

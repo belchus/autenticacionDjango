@@ -1,0 +1,15 @@
+{% extends "publicaciones/base.html" %}
+{% block title %}
+Inicio | Glups
+{% endblock %}
+{% block content %}    
+<div>
+    <form method="POST">
+        {% csrf_token %}
+        {{form.as_p}}
+        <button type="submit">
+            Guardar publicacion
+        </button>
+    </form>
+</div>
+{% endblock %}

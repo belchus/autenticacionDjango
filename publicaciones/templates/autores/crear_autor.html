@@ -1,0 +1,36 @@
+{% extends "publicaciones/base.html" %}
+{% block title %}
+Crear Autor
+{% endblock %}
+{% block content %}    
+<h2>Nuevo Autor</h2>    
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div>
+        {{form.nombre.label_tag}}
+        {{form.nombre}}
+        {{form.nombre.error}}
+    </div>
+    <div>
+        {{form.apellido.label_tag}}
+        {{form.apellido}}
+        {{form.nombre.error}}
+    </div>
+    <div>
+        {{form.email.label_tag}}
+        {{form.email}}
+        {{form.nombre.error}}
+    </div>
+    <div>
+        {{form.username.label_tag}}
+        {{form.username}}
+        {{form.username.error}}
+    </div>
+    <div>
+        {{form.imagen.label_tag}}
+        {{form.imagen}}
+        {{form.imagen.error}}
+    </div>
+    <button type="submit">Crear Autor</button>
+</form>
+{% endblock %}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}Glups{% endblock %}</title>
+
+    <link
+        rel="stylesheet"
+        href="{% static 'publicaciones/css/style.css' %}">
+</head>
+
+<body>
+    <header class="site-header">
+        <h1>Glups</h1>
+
+        <nav class="site-nav" aria-label="Navegación principal">
+            <a href="{% url 'inicio' %}">Inicio</a>
+            <a href="{% url 'lista_publicaciones' %}">
+                Publicaciones
+            </a>
+            <a href="{% url 'lista_autores' %}">
+                Autores
+            </a>
+            <a href="{% url 'contacto' %}">
+                Contacto
+            </a>
+            <p>Usuario autenticado : {{user.is_autheticated}}</p>
+            {% if user.is_autheticated %}
+             <span>
+                Hola, {{user.username}}
+             </span>
+                {% if user.perfil_autor.imagen %}
+                <img src="{{user.perfil_autor.imagen.url}}" alt="">
+                {% endif %}
+             <form action="POST" action="{% url 'cerrar_sesion' %}">
+                {% csrf_token %}
+                <button type="submit">Cerrar sesion</button>
+             </form>
+            {% else %}
+            <a href="{% url 'login' %}">Iniciar sesion</a>
+            <a href="{% url 'registro' %}">Registrate</a>
+            {%endif%}
+        </nav>
+    </header>
+
+    <main class="site-main">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <p>Creado con Django</p>
+    </footer>
+</body>
+</html>

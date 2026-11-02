@@ -1,0 +1,36 @@
+
+{% extends "publicaciones/base.html" %}
+
+{% block title %}
+Contacto | Glups
+{% endblock %}
+
+{% block content %}
+
+<h2>Contacto</h2>
+
+<p>
+    ¿Tenés alguna consulta? Completá el siguiente formulario.
+</p>
+
+{% if enviado %}
+
+    <p>
+        Gracias, {{ nombre }}. El formulario se validó correctamente.
+    </p>
+
+{% else %}
+
+    <form method="POST">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">
+            Enviar mensaje
+        </button>
+    </form>
+
+{% endif %}
+
+{% endblock %}

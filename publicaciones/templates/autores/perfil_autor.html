@@ -1,0 +1,13 @@
+{% extends "publicaciones/base.html" %}
+{% block title %}
+Autores
+{% endblock %}
+{% block content %}    
+
+<h2>{{autor.username}}</h2>
+<p>{{autor.nombre}} {{autor.apellido}} </p>
+{% if autor.imagen %}
+<img src="{{autor.imagen.url}}" alt="">
+{% endif %}
+<a href="{% url 'editar_perfil' autor.id %}">Editar perfil</a>
+{% endblock %}

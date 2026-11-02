@@ -1,0 +1,29 @@
+{% extends "publicaciones/base.html" %}
+{% block title %}
+Inicio | Glups
+{% endblock %}
+{% block content %}    
+<h1>Crear publicacion</h1>
+<form method="POST">
+    {% csrf_token %}
+    <label>Titulo:</label>
+    <input type="text" name="titulo" required>
+    <br><br>
+
+    <label>Descripcion:</label>
+    <textarea name="descripcion" required></textarea>
+    <br><br>
+
+    <label >Autor:</label>
+    <input type="text" name="autor" required>
+
+    <label>Estado:</label>
+    <select name="estado">
+        <option value="borrador">Borrador</option>
+        <option value="publicado">Publicado</option>
+        <option value="archivado">Archivado</option>
+    </select>
+
+    <button type="submit">Guardar</button>
+</form>
+{% endblock %}
