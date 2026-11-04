@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.core.validators import MinValueValidator,MaxValueValidator
 
 # Create your models here.
 
@@ -39,6 +40,31 @@ class Comentario(models.Model):
     contenido = models.TextField()
     fecha = models.DateField(auto_now_add=True)
     publicacion = models.ForeignKey(Publicacion,on_delete=models.CASCADE,related_name="comentarios")
-
+    autor = models.ForeignKey(Autor,on_delete=models.CASCADE,null=True,blank=True,related_name="comentarios")
     def __str__(self):
         return f"Comentario en {self.publicacion.titulo}"
+    
+
+class Calificacion(models.Model):
+    publicacion = models.ForeignKey(
+        Publicacion, on_delete= models.CASCADE, related_name="calificaciones")
+    autor = models.ForeignKey(Autor,on_delete=models.CASCADE,related_name="calificaciones")
+    estrellas = models.PositiveSmallIntegerField(validators=[MinValueValidator(1),MaxValueValidator(5)])
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["publicacion","autor"],
+                name= "una_calificacion_por_usuario"
+
+            ),
+            models.CheckConstraint(
+                condition = models.Q(estrellas__gt=1) &
+                models.Q(estrellas__gt=5) ,
+                name= "calificacion_entre_1_y_5"
+
+
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.autor}-{self.estrellas}estrellas"

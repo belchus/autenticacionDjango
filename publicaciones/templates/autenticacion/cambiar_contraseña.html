@@ -1,0 +1,15 @@
+{% extends "publicaciones/base.html" %}
+{% block title %}
+Cambiar contraseña
+{% endblock %}
+{% block content %}    
+
+<h1>Cambiar contraseña</h1>
+<p>Para cambiar tu contraseña completa los siguientes campos</p>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Cambiar contraseña</button>
+</form>
+<a href="{% url 'inicio' %}">Volver</a>
+{% endblock %}

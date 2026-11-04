@@ -27,15 +27,16 @@
             <a href="{% url 'contacto' %}">
                 Contacto
             </a>
-            <p>Usuario autenticado : {{user.is_autheticated}}</p>
-            {% if user.is_autheticated %}
+            
+            {% if user.is_authenticated %}
              <span>
-                Hola, {{user.username}}
+                <a href="{% url 'perfil_autor' user.perfil_autor.id %}">Hola, {{user.username}}</a>
              </span>
                 {% if user.perfil_autor.imagen %}
-                <img src="{{user.perfil_autor.imagen.url}}" alt="">
+                <img src="{{user.perfil_autor.imagen.url}}" alt=""
+                width="40" height="40" style="border-radius: 50%;">
                 {% endif %}
-             <form action="POST" action="{% url 'cerrar_sesion' %}">
+             <form method="POST" action="{% url 'cerrar_sesion' %}">
                 {% csrf_token %}
                 <button type="submit">Cerrar sesion</button>
              </form>

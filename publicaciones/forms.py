@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
-from publicaciones.models import Autor, Comentario, Publicacion
+from publicaciones.models import Autor, Calificacion, Comentario, Publicacion
 
 User = get_user_model()
 
@@ -22,7 +22,6 @@ class PublicacionForm(forms.ModelForm):
         fields = [
             "titulo",
             "descripcion",
-            "autor",
             "estado",
             "url_imagen"
         ]
@@ -30,7 +29,6 @@ class PublicacionForm(forms.ModelForm):
         labels = {
             "titulo":"Titulo de la publicacion",
             "descripcion":"Descipcion de la publicacion",
-            "autor":"Selecciona un autor",
             "estado":"Estado de la publicacion",
             "url_imagen":"URL de la imagen de la publicacion"
         }
@@ -38,7 +36,6 @@ class PublicacionForm(forms.ModelForm):
         widgets = {
             "titulo":forms.TextInput(attrs={"class":"form-control","placeholder":"Escribi tu titulo"}),
             "descripcion":forms.Textarea(attrs={"class":"form-control","placeholder":"Escribi el contenido"}),
-            "autor":forms.Select(attrs={"class":"form-control"}),
             "estado":forms.Select(attrs={"class":"form-select"}),
            
         }
@@ -61,6 +58,22 @@ class ComentarioForm(forms.ModelForm):
                 "placeholder":"Deja tu comentario"
             })
         }
+
+class CalificacionForm(forms.ModelForm):
+    estrellas = forms.TypedMultipleChoiceField(
+        choices = [
+            (1,"1 estrella"),
+            (2,"2 estrellas"),
+            (3,"3 estrellas"),
+            (4,"4 estrellas"),
+            (5,"5 estrellas"),
+        ],
+        coerce= int,
+        widget= forms.RadioSelect
+    )
+    class Meta:
+        model = Calificacion
+        fields = ["estrellas"]
 
 class AutorCreateForm(forms.ModelForm):
     class Meta:
@@ -90,18 +103,21 @@ class AutorForm(forms.ModelForm):
             "nombre",
             "apellido",
             "email",
+            "imagen"
             
         ]
         labels = {
             "nombre":"Nombre",
             "apellido":"Apellido",
-            "email":"Email"
+            "email":"Email",
+            "imagen":"Avatar"
         }
 
         widgets = {
             "nombre": forms.TextInput(attrs={"class":"form-control"}),
             "apellido": forms.TextInput(attrs={"class":"form-control"}),
-            "email": forms.EmailInput(attrs={"class":"form-control"})
+            "email": forms.EmailInput(attrs={"class":"form-control"}),
+            "imagen":forms.ClearableFileInput(attrs={"class":"form-control"})
         }
 
 class RegistroForm(UserCreationForm):
@@ -160,3 +176,4 @@ class RegistroForm(UserCreationForm):
             )
 
         return usuario
+    

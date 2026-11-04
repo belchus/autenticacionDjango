@@ -1,16 +1,21 @@
 from django.shortcuts import get_object_or_404, redirect, render
-from .models import Autor, Publicacion
+from .models import Autor, Calificacion, Publicacion
 from django.contrib.auth import login,logout
+from django.db.models import Avg,Count
+from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 
 
-from .forms import AutorCreateForm, AutorForm, ComentarioForm, ContactoForm, PublicacionForm, RegistroForm
+from .forms import AutorCreateForm, AutorForm, CalificacionForm, ComentarioForm, ContactoForm, PublicacionForm, RegistroForm
 
 #VISTA DEL INICIO EN LA RAIZ / 
 def inicio(request):
+    print("USUARIO:",request.user)
+    print("AUTENTICADO:",request.user.is_authenticated)
     return render(request, 'publicaciones/inicio.html')
+
 
 #READ : Listar publicaciones
 def lista_publicaciones(request):
@@ -29,10 +34,50 @@ def lista_publicaciones(request):
     contexto = {"publicaciones": publicaciones,"busqueda":busqueda,"estado":estado,"orden":orden}
     return render(request,"publicaciones/lista_publicaciones.html", contexto)
 
-def detalle_publicacion(request,id):
-    publicacion = get_object_or_404(Publicacion,id=id)
+def detalle_publicacion(request,publicacion_id):
+    publicacion = get_object_or_404(Publicacion,id=publicacion_id)
+    comentarios = publicacion.comentarios.select_related(
+        "autor"
+    ).order_by("-fecha")
+    datos_calificacion = publicacion.calificaciones.aggregate(
+        promedio=Avg("estrellas"),
+        cantidad= Count("id")
+    )
+    promedio = datos_calificacion["promedio"] or 0
+    cantidad = datos_calificacion["cantidad"]
 
-    return render(request,"publicaciones/detalle_publicacion.html",{"publicacion":publicacion})
+    estrellas = int(round(promedio))
+    calificacion_usuario = None
+    if request.user.is_authenticated:
+        autor = Autor.objects.filter(
+            usuario=request.user
+        ).first()
+        if autor:
+            calificacion_usuario = Calificacion.objects.filter(
+                publicacion= publicacion,
+                autor=autor
+            ).first()
+
+    if calificacion_usuario:
+        form_calificacion = CalificacionForm(
+            instance = calificacion_usuario
+        )
+    else:
+        form_calificacion = CalificacionForm()
+    form_comentario = ComentarioForm()
+
+    context = {
+        "publicacion":publicacion,
+        "comentarios":comentarios,
+        "promedio":promedio,
+        "cantidad":cantidad,
+        "estrellas":estrellas,
+        "calificacion_usuario": calificacion_usuario,
+        "form_calificacion" : form_calificacion,
+        "form_comentario" :form_comentario
+    }
+
+    return render(request,"publicaciones/detalle_publicacion.html",context)
 
 def lista_autores(request):
     autores = Autor.objects.all()
@@ -40,6 +85,7 @@ def lista_autores(request):
     if busqueda:
         autores = autores.filter(username__icontains = busqueda)
     return render(request,"autores/lista_autores.html",{"autores":autores})
+
 
 def perfil_autor(request,autor_id):
     autor = get_object_or_404(Autor,id=autor_id)
@@ -51,7 +97,7 @@ def perfil_autor(request,autor_id):
 def editar_perfil(request,autor_id):
     autor = get_object_or_404(Autor,id = autor_id)
     if request.method == "POST":
-        form = AutorForm(request.POST, instance=autor)
+        form = AutorForm(request.POST, request.FILES,instance=autor)
         if form.is_valid():
             form.save()
             return redirect("perfil_autor",autor_id=autor.id)
@@ -62,10 +108,10 @@ def editar_perfil(request,autor_id):
 #CREATE : Crear publicaciones
 @login_required
 def crear_post(request):
+    autor = get_object_or_404(Autor,usuario=request.user)
     if request.method == "POST":
         titulo = request.POST["titulo"]
         descripcion = request.POST["descripcion"]
-        autor = request.POST["autor"]
         estado = request.POST["estado"]
 
         Publicacion.objects.create(
@@ -77,15 +123,6 @@ def crear_post(request):
         return redirect("lista_publicaciones")
     return render(request,"publicaciones/crear_publicacion.html")
 
-def crear_publicacion(request):
-    if request.method == "POST":
-        form = PublicacionForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect("lista_publicaciones")
-    else:
-        form = PublicacionForm()
-    return render(request,"publicaciones/crear_publicacion.html",{"form":form})
 
 
 
@@ -102,16 +139,44 @@ def crear_autor(request):
 @login_required
 def dejar_comentario(request,publicacion_id):
     publicacion = get_object_or_404(Publicacion,id=publicacion_id)
+    autor = get_object_or_404(Autor,usuario = request.user)
     if request.method == "POST":
         form = ComentarioForm(request.POST)
         if form.is_valid():
             comentario = form.save(commit=False)
-            comentario.publicacion = publicacion
+            comentario.publicacion = publicacion,
+            comentario.autor = autor,
             comentario.save()
+            messages.success(request,"Tu comentario se publico exitosamente!")
             return redirect("detalle_publicacion",id=publicacion.id)
         else:
             form = ComentarioForm()
     return render(request,"publicaciones/comentar.html",{"form":form,"publicacion":publicacion})
+
+@login_required
+def calificar_publicacion(request,publicacion_id):
+    print("ENTRO A CALIFICAR")
+    print("METODO:",request.method)
+    print("DATOS: " ,request.POST)
+    publicacion = get_object_or_404(
+        Publicacion,id= publicacion_id
+    )
+    autor = get_object_or_404(
+        Autor,usuario= request.user
+    )
+    if request.method == "POST":
+        form = CalificacionForm(request.POST)
+        if form.is_valid():
+            estrellas = form.cleaned_data["estrellas"]
+            Calificacion.objects.update_or_create(
+                publicacion = publicacion,
+                autor = autor,
+                defaults= {
+                    "estrellas" :estrellas
+                }
+            )
+    return redirect("detalle_publicacion",publicacion_id= publicacion.id)
+
 
 #UPDATE: Actualizar una publicacion
 @login_required
@@ -204,5 +269,4 @@ def iniciar_sesion(request):
 
 def cerrar_sesion(request):
     logout(request)
-
-    return redirect("inicio")
+    return redirect("lista_publicaciones")

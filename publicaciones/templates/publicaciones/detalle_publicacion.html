@@ -40,6 +40,57 @@
                 </span>
             {% endif %}
 
+        <section>
+            <h4>Calificacion de  esta publicacion</h4>
+            <div> 
+                {% for estrella in "12345" %}
+                    {% if forloop.counter <= estrellas %}
+                    <span class = "estrella llena">⭐</span>
+                    {% else %}
+                        <span class="estrella">⭐
+
+                        </span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <p><strong>{{promedio | floatformat:1}}</strong>/5</p>
+            <p>{{cantidad}} personas calificaron esta publicacion</p>
+        </section>
+        <section>
+            <h4>Califica!</h4>
+            {% if user.is_authenticated %}
+                {% if calificacion_usuario %}
+                    <p>Ya calificaste esta publicacion,modificala</p>
+                {% else %}
+                    <p>Selecciona la cantidad de estrellas</p>
+            {% endif %}
+
+            <form method="POST" action="{% url 'calificar_publicacion' publicacion.id %}">
+                {% csrf_token %}
+                <div>
+                    {%for estrella in "54321" %}
+                    <input type="radio" name="estrellas" value="{{estrella}}" id="estrella-{{estrella}}"
+                     {%if calificacion_usuario and calificacion_usuario.estrellas == forloop.counter|add:"0" %} checked 
+                     {% endif%} required>
+                     <label for="estrella-{estrella}">⭐</label>
+                     {% endfor %}
+                </div>
+
+                <button type="submit">{%if calificacion_usuario%}Actualizar
+                    {% else %} Enviar 
+                    {%endif%}</button>
+            </form>
+
+            {% else %}
+            <p>
+                <a href="{% url 'login' %}">
+                    Inicia sesion
+                </a>
+                para calificar esta publicacion
+            </p>
+            {% endif %}
+        </section>
+
             <div class="publicacion-acciones">
                 <!-- Editar -->
                 <a href="{% url 'editar_publicacion' publicacion.id %}"

@@ -9,5 +9,76 @@ Autores
 {% if autor.imagen %}
 <img src="{{autor.imagen.url}}" alt="">
 {% endif %}
+{% if user.is_authenticated and user.id == autor.usuario_id %}
 <a href="{% url 'editar_perfil' autor.id %}">Editar perfil</a>
+<a href="{% url 'cambiar_contraseña' %}">Cambiar contraseña</a>
+{% endif %}
+{% if publicaciones %}
+<span>{{publicaciones | length}} posts {{publicaciones | length | pluralize}}</span>
+{% endif %}
+<div>
+    <h2>Posts de {{autor.username }}</h2>
+    {%if publicaciones%}
+        {% for publicacion in publicaciones %}
+        <h4>{{publicacion.titulo}}</h4>
+        <p>{{publicacion.descripcion}}</p>
+    
+        <div class="publicacion-footer">
+            {% if publicacion.estado %}
+                <span class="publicacion-estado">
+                    {{ publicacion.get_estado_display }}
+                </span>
+            {% endif %}
+
+            <div class="publicacion-acciones">
+                <!-- Ver -->
+                <a href="{% url 'detalle_publicacion' publicacion.id %}"
+                   class="btn-icon btn-ver"
+                   title="Ver publicación"
+                   aria-label="Ver publicación">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </a>
+                {% if user.is_authenticated and publicacion.autor.usuario_id == user.id %}
+
+                <!-- Editar -->
+                <a href="{% url 'editar_publicacion' publicacion.id %}"
+                   class="btn-icon btn-editar"
+                   title="Editar publicación"
+                   aria-label="Editar publicación">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                    </svg>
+                </a>
+
+                <!-- Eliminar -->
+                <form action="{% url 'eliminar_publicacion' publicacion.id %}"
+                      method="POST"
+                      class="form-eliminar"
+                      onsubmit="return confirm('¿Seguro que querés eliminar esta publicación?');">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="btn-icon btn-eliminar"
+                            title="Eliminar publicación"
+                            aria-label="Eliminar publicación">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" >
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                            <path d="M10 11v6"></path>
+                            <path d="M14 11v6"></path>
+                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                        </svg>
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor%}
+    {% else %}
+    <div>Este autor todavia no publico nada</div>
+    {% endif %}
+</div>
 {% endblock %}
