@@ -42,54 +42,98 @@
 
         <section>
             <h4>Calificacion de  esta publicacion</h4>
-            <div> 
-                {% for estrella in "12345" %}
-                    {% if forloop.counter <= estrellas %}
-                    <span class = "estrella llena">⭐</span>
-                    {% else %}
-                        <span class="estrella">⭐
+           <!-- SISTEMA DE CALIFICACIONES -->
+<div class="rating-container">
 
-                        </span>
-                    {% endif %}
-                {% endfor %}
-            </div>
-            <p><strong>{{promedio | floatformat:1}}</strong>/5</p>
-            <p>{{cantidad}} personas calificaron esta publicacion</p>
-        </section>
-        <section>
-            <h4>Califica!</h4>
-            {% if user.is_authenticated %}
-                {% if calificacion_usuario %}
-                    <p>Ya calificaste esta publicacion,modificala</p>
+    <h3>Calificación de la publicación</h3>
+
+    <!-- Mostramos el promedio -->
+    <div class="rating-promedio">
+
+        <div class="estrellas-promedio">
+
+            {% for estrella in "12345" %}
+
+                {% if forloop.counter <= estrellas %}
+                    <span class="estrella llena">★</span>
                 {% else %}
-                    <p>Selecciona la cantidad de estrellas</p>
-            {% endif %}
+                    <span class="estrella">★</span>
+                {% endif %}
 
-            <form method="POST" action="{% url 'calificar_publicacion' publicacion.id %}">
-                {% csrf_token %}
-                <div>
-                    {%for estrella in "54321" %}
-                    <input type="radio" name="estrellas" value="{{estrella}}" id="estrella-{{estrella}}"
-                     {%if calificacion_usuario and calificacion_usuario.estrellas == forloop.counter|add:"0" %} checked 
-                     {% endif%} required>
-                     <label for="estrella-{estrella}">⭐</label>
-                     {% endfor %}
-                </div>
+            {% endfor %}
 
-                <button type="submit">{%if calificacion_usuario%}Actualizar
-                    {% else %} Enviar 
-                    {%endif%}</button>
-            </form>
+        </div>
 
-            {% else %}
+        <p>
+            <strong>{{ promedio|floatformat:1 }}</strong> / 5
+        </p>
+
+        <small>
+            {{ cantidad }} personas calificaron esta publicación
+        </small>
+
+    </div>
+
+
+    <!-- Formulario para calificar -->
+    {% if user.is_authenticated %}
+
+        <form
+            method="POST"
+            action="{% url 'calificar_publicacion' publicacion.id %}"
+            class="rating-form"
+        >
+
+            {% csrf_token %}
+
             <p>
-                <a href="{% url 'login' %}">
-                    Inicia sesion
-                </a>
-                para calificar esta publicacion
+                {% if calificacion_usuario %}
+                    Modificá tu calificación:
+                {% else %}
+                    ¿Cuántas estrellas le das a esta publicación?
+                {% endif %}
             </p>
-            {% endif %}
-        </section>
+
+            <div class="rating-input">
+
+                {% for estrella in "54321" %}
+
+                    <input
+                        type="radio"
+                        name="estrellas"
+                        value="{{ estrella }}"
+                        id="estrella-{{ estrella }}"
+                        {% if calificacion_usuario and calificacion_usuario.estrellas|stringformat:"s" == estrella %}
+                            checked
+                        {% endif %}
+                        required
+                    >
+
+                    <label for="estrella-{{ estrella }}">★</label>
+
+                {% endfor %}
+
+            </div>
+
+            <button type="submit" class="btn-rating">
+                {% if calificacion_usuario %}
+                    Actualizar calificación
+                {% else %}
+                    Enviar calificación
+                {% endif %}
+            </button>
+
+        </form>
+
+    {% else %}
+
+        <p class="rating-login">
+            Iniciá sesión para calificar esta publicación.
+        </p>
+
+    {% endif %}
+
+</div>
 
             <div class="publicacion-acciones">
                 <!-- Editar -->

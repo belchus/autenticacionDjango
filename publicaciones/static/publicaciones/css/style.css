@@ -3,6 +3,43 @@
    ======================================== */
 
 /* 1. Variables de diseño */
+
+/* Estrellas del promedio */
+
+.rating-display {
+    font-size: 30px;
+    color: #cccccc;
+}
+
+.estrella.llena {
+    color: #ffc107;
+}
+
+/* Selector de estrellas */
+
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 5px;
+}
+
+.rating-input input {
+    display: none;
+}
+
+.rating-input label {
+    font-size: 35px;
+    color: #cccccc;
+    cursor: pointer;
+}
+
+.rating-input input:checked ~ label,
+.rating-input label:hover,
+.rating-input label:hover ~ label {
+    color: #ffc107;
+}
+
 :root {
     --color-primary: #3867f5;
     --color-primary-hover: #2452df;

@@ -59,21 +59,22 @@ class ComentarioForm(forms.ModelForm):
             })
         }
 
-class CalificacionForm(forms.ModelForm):
-    estrellas = forms.TypedMultipleChoiceField(
-        choices = [
-            (1,"1 estrella"),
-            (2,"2 estrellas"),
-            (3,"3 estrellas"),
-            (4,"4 estrellas"),
-            (5,"5 estrellas"),
+from django import forms
+
+
+class CalificacionForm(forms.Form):
+
+    estrellas = forms.ChoiceField(
+        choices=[
+            ("1", "1 estrella"),
+            ("2", "2 estrellas"),
+            ("3", "3 estrellas"),
+            ("4", "4 estrellas"),
+            ("5", "5 estrellas"),
         ],
-        coerce= int,
-        widget= forms.RadioSelect
+        widget=forms.RadioSelect,
+        required=True
     )
-    class Meta:
-        model = Calificacion
-        fields = ["estrellas"]
 
 class AutorCreateForm(forms.ModelForm):
     class Meta:

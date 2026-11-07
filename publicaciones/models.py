@@ -46,25 +46,38 @@ class Comentario(models.Model):
     
 
 class Calificacion(models.Model):
+
     publicacion = models.ForeignKey(
-        Publicacion, on_delete= models.CASCADE, related_name="calificaciones")
-    autor = models.ForeignKey(Autor,on_delete=models.CASCADE,related_name="calificaciones")
-    estrellas = models.PositiveSmallIntegerField(validators=[MinValueValidator(1),MaxValueValidator(5)])
+        Publicacion,
+        on_delete=models.CASCADE,
+        related_name="calificaciones"
+    )
+
+    autor = models.ForeignKey(
+        Autor,
+        on_delete=models.CASCADE,
+        related_name="calificaciones"
+    )
+
+    estrellas = models.PositiveSmallIntegerField(
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(5)
+        ]
+    )
+
     class Meta:
+
         constraints = [
+
             models.UniqueConstraint(
-                fields=["publicacion","autor"],
-                name= "una_calificacion_por_usuario"
-
+                fields=["publicacion", "autor"],
+                name="una_calificacion_por_usuario"
             ),
+
             models.CheckConstraint(
-                condition = models.Q(estrellas__gt=1) &
-                models.Q(estrellas__gt=5) ,
-                name= "calificacion_entre_1_y_5"
-
-
+                condition=models.Q(estrellas__gte=1) &
+                          models.Q(estrellas__lte=5),
+                name="calificacion_entre_1_y_5"
             )
         ]
-
-    def __str__(self):
-        return f"{self.autor}-{self.estrellas}estrellas"
