@@ -81,3 +81,13 @@ class Calificacion(models.Model):
                 name="calificacion_entre_1_y_5"
             )
         ]
+
+class Mensaje(models.Model):
+    remitente = models.ForeignKey(Autor,on_delete=models.CASCADE,related_name="mensajes_enviados")
+    destinatario = models.ForeignKey(Autor,on_delete=models.CASCADE,related_name="mensajes_recibidos")
+    contenido = models.TextField()
+    fecha_envio = models.DateTimeField(auto_now_add=True)
+    visto = models.BooleanField(default=False)
+    class Meta:
+        ordering = ["fecha_envio"]
+        

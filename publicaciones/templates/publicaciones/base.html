@@ -27,6 +27,7 @@
             <a href="{% url 'contacto' %}">
                 Contacto
             </a>
+            <a href="{% url 'lista_mensajes'%}">Mensajes</a>
             
             {% if user.is_authenticated %}
              <span>
@@ -44,6 +45,10 @@
             <a href="{% url 'login' %}">Iniciar sesion</a>
             <a href="{% url 'registro' %}">Registrate</a>
             {%endif%}
+
+            {% if user.is_authenticated and user.is_staff %}
+            <a href="{% url 'publicaciones_pendientes' %}">Publicaciones pendientes</a>
+            {% endif %}
         </nav>
     </header>
 

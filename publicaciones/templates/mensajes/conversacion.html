@@ -1,0 +1,329 @@
+
+{% extends "publicaciones/base.html" %}
+
+{% block title %}
+Chat
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .chat-wrapper {
+        max-width: 850px;
+        margin: 35px auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .chat-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 18px 25px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #eee;
+    }
+
+    .chat-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .chat-avatar-placeholder {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #dce7ff;
+        color: #3159a5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        font-size: 20px;
+    }
+
+    .chat-header h4 {
+        margin: 0;
+        font-size: 17px;
+    }
+
+    .chat-header small {
+        color: #777;
+    }
+
+    .chat-messages {
+        height: 480px;
+        overflow-y: auto;
+        padding: 25px;
+        background: #efeae2;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .mensaje-fila {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        max-width: 80%;
+    }
+
+    .mensaje-fila.propio {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+    }
+
+    .mensaje-fila.ajeno {
+        align-self: flex-start;
+    }
+
+    .mensaje-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .mensaje-avatar-placeholder {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #dce7ff;
+        color: #3159a5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 13px;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+
+    .mensaje-burbuja {
+        padding: 10px 14px;
+        border-radius: 12px;
+        min-width: 120px;
+        overflow-wrap: anywhere;
+    }
+
+    .propio .mensaje-burbuja {
+        background: #d9fdd3;
+        border-top-right-radius: 3px;
+    }
+
+    .ajeno .mensaje-burbuja {
+        background: white;
+        border-top-left-radius: 3px;
+    }
+
+    .mensaje-burbuja p {
+        margin: 0;
+        color: #222;
+        white-space: pre-wrap;
+    }
+
+    .mensaje-info {
+        display: block;
+        text-align: right;
+        font-size: 11px;
+        color: #777;
+        margin-top: 5px;
+    }
+
+    .chat-form {
+        padding: 18px;
+        background: #f8f9fa;
+        border-top: 1px solid #eee;
+    }
+
+    .chat-form form {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .chat-form textarea {
+        resize: none;
+        border-radius: 20px;
+        padding: 12px 18px;
+    }
+
+    .chat-form button {
+        border-radius: 20px;
+        padding: 10px 22px;
+        white-space: nowrap;
+    }
+
+    .chat-empty {
+        text-align: center;
+        margin: auto;
+        color: #777;
+    }
+
+    @media (max-width: 576px) {
+        .chat-wrapper {
+            margin: 15px 8px;
+        }
+
+        .chat-messages {
+            height: 420px;
+            padding: 15px 10px;
+        }
+
+        .mensaje-fila {
+            max-width: 90%;
+        }
+
+        .chat-form form {
+            align-items: stretch;
+        }
+    }
+</style>
+
+<div class="chat-wrapper">
+
+    <!-- Encabezado del chat -->
+    <div class="chat-header">
+
+        {% if destinatario.imagen %}
+
+            <img src="{{ destinatario.imagen.url }}"
+                 class="chat-avatar"
+                 alt="{{ destinatario.username }}">
+
+        {% else %}
+
+            <div class="chat-avatar-placeholder">
+                {{ destinatario.username|first|upper }}
+            </div>
+
+        {% endif %}
+
+        <div>
+            <h4>{{ destinatario.username }}</h4>
+            <small>Conversación privada</small>
+        </div>
+
+    </div>
+
+    <!-- Mensajes -->
+    <div class="chat-messages" id="chat-messages">
+
+        {% for mensaje in mensajes %}
+
+            {% if mensaje.remitente_id == autor_actual.id %}
+
+                <!-- Mensaje enviado por mí -->
+                <div class="mensaje-fila propio">
+
+                    {% if autor_actual.imagen %}
+                        <img src="{{ autor_actual.imagen.url }}"
+                             class="mensaje-avatar"
+                             alt="Mi avatar">
+                    {% else %}
+                        <div class="mensaje-avatar-placeholder">
+                            {{ autor_actual.username|first|upper }}
+                        </div>
+                    {% endif %}
+
+                    <div class="mensaje-burbuja">
+
+                        <p>{{ mensaje.contenido|linebreaksbr }}</p>
+
+                        <small class="mensaje-info">
+                            {{ mensaje.fecha_envio|date:"H:i" }}
+
+                            {% if mensaje.leido %}
+                                ✓✓ Leído
+                            {% else %}
+                                ✓ Enviado
+                            {% endif %}
+                        </small>
+
+                    </div>
+
+                </div>
+
+            {% else %}
+
+                <!-- Mensaje recibido -->
+                <div class="mensaje-fila ajeno">
+
+                    {% if destinatario.imagen %}
+                        <img src="{{ destinatario.imagen.url }}"
+                             class="mensaje-avatar"
+                             alt="{{ destinatario.username }}">
+                    {% else %}
+                        <div class="mensaje-avatar-placeholder">
+                            {{ destinatario.username|first|upper }}
+                        </div>
+                    {% endif %}
+
+                    <div class="mensaje-burbuja">
+
+                        <p>{{ mensaje.contenido|linebreaksbr }}</p>
+
+                        <small class="mensaje-info">
+                            {{ mensaje.fecha_envio|date:"H:i" }}
+                        </small>
+
+                    </div>
+
+                </div>
+
+            {% endif %}
+
+        {% empty %}
+
+            <div class="chat-empty">
+                <h5>¡Comenzá la conversación!</h5>
+                <p>Enviá tu primer mensaje.</p>
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+    <!-- Formulario para enviar -->
+    <div class="chat-form">
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <textarea
+                name="contenido"
+                class="form-control"
+                rows="1"
+                placeholder="Escribí un mensaje..."
+                required></textarea>
+
+            <button type="submit" class="btn btn-success">
+                Enviar
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<div class="text-center mb-4">
+    <a href="{% url 'lista_mensajes' %}" class="btn btn-outline-secondary">
+        Volver a mensajes
+    </a>
+</div>
+
+<!-- Bajar automáticamente al último mensaje -->
+<script>
+    const chatMessages = document.getElementById("chat-messages");
+
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+</script>
+
+{% endblock %}

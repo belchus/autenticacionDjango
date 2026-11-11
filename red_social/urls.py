@@ -24,6 +24,8 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.inicio, name='inicio'),
+    path('publicaciones_pendientes/',views.publicaciones_pendientes,name="publicaciones_pendientes"),
+    path('revisar_publicacion/<int:publicacion_id>',views.revisar_publicacion,name="revisar_publicacion"),
     path('publicaciones/', views.lista_publicaciones, name='lista_publicaciones'),
     path('publicacion/<int:publicacion_id>',views.detalle_publicacion, name= "detalle_publicacion"),
     path('crear/',views.crear_post, name="crear_publicacion"),
@@ -40,7 +42,9 @@ urlpatterns = [
     path('login/',views.iniciar_sesion, name="login"),
     path('cerrar_sesion/',views.cerrar_sesion, name="cerrar_sesion"),
     path('cambiar_contraseña/',auth_views.PasswordChangeView.as_view(template_name= "autenticacion/cambiar_contraseña.html",
-                                                                     success_url = reverse_lazy("login")),name="cambiar_contraseña")
+                                                                     success_url = reverse_lazy("login")),name="cambiar_contraseña"),
+    path("mensajes/",views.lista_mensajes,name="lista_mensajes"),
+    path("chat/<int:autor_id>",views.conversacion,name="conversacion")
 ]
 
 if settings.DEBUG:

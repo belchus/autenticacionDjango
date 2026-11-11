@@ -1,22 +1,69 @@
 
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth import login, logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required , user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count,Q
+from django.db import models
 from django.views.decorators.http import require_POST
 
-from .models import Autor, Calificacion, Publicacion
+from .models import Autor, Calificacion, Mensaje, Publicacion
 from .forms import (
     AutorCreateForm,
     AutorForm,
     CalificacionForm,
     ComentarioForm,
     ContactoForm,
+    MensajeForm,
     PublicacionForm,
     RegistroForm
 )
+
+# ==========================================
+# ADMINISTRADOR
+# ==========================================
+
+
+def es_administrador(user):
+    return user.is_staff
+
+
+@login_required
+@user_passes_test(es_administrador)
+
+def publicaciones_pendientes(request):
+
+    publicaciones = Publicacion.objects.filter(estado = "borrador").order_by("-fecha_creacion")
+    return render(request,"publicaciones/publicaciones_pendientes.html",{"publicaciones":publicaciones})
+
+@login_required
+@user_passes_test(es_administrador)
+
+def revisar_publicacion(request,publicacion_id):
+    publicacion = get_object_or_404(Publicacion,id=publicacion_id,estado = "borrador")
+
+    if request.method == "POST":
+        accion = request.POST.get("accion")
+        if accion == "aprobar":
+            publicacion.estado = "publicado"
+            publicacion.save()
+
+            messages.success(request,"Publicacion aprobada y publicada")
+            print("ESTADO",publicacion.estado)
+
+        elif accion == "rechazar":
+            publicacion.estado = "archivado"
+            publicacion.save()
+
+            messages.success(request,"Publicacion rechazada")
+        
+        else: 
+            messages.error(request,"Accion no valida")
+            return redirect("publicaciones_pendientes")
+
+    print("ESTADO",publicacion.estado)
+    return redirect("publicaciones_pendientes")
 
 
 # ==========================================
@@ -33,6 +80,9 @@ def inicio(request):
 # ==========================================
 # LISTAR PUBLICACIONES
 # ==========================================
+
+
+from django.db.models import Avg, Count
 
 def lista_publicaciones(request):
 
@@ -61,6 +111,12 @@ def lista_publicaciones(request):
         publicaciones = publicaciones.order_by("fecha_creacion")
     else:
         publicaciones = publicaciones.order_by("-fecha_creacion")
+
+    # Calcular promedio y cantidad de calificaciones
+    publicaciones = publicaciones.annotate(
+        promedio_calificacion=Avg("calificaciones__estrellas"),
+        cantidad_calificaciones=Count("calificaciones")
+    )
 
     contexto = {
         "publicaciones": publicaciones,
@@ -248,29 +304,34 @@ def crear_post(request):
         usuario=request.user
     )
 
+    # Inicializamos el formulario
+    form = PublicacionForm()
+
     if request.method == "POST":
-
-        titulo = request.POST["titulo"]
-        descripcion = request.POST["descripcion"]
-        estado = request.POST["estado"]
-
-        Publicacion.objects.create(
-            titulo=titulo,
-            descripcion=descripcion,
-            autor=autor,
-            estado=estado
+        form = PublicacionForm(
+            request.POST,
+            request.FILES
         )
 
-        messages.success(
-            request,
-            "La publicación fue creada correctamente."
-        )
+        if form.is_valid():
+            publicacion = form.save(commit=False)
 
-        return redirect("lista_publicaciones")
+            publicacion.autor = autor
+            publicacion.estado = "borrador"
+
+            publicacion.save()
+
+            messages.success(
+                request,
+                "Tu publicación está pendiente de aprobación"
+            )
+
+            return redirect("lista_publicaciones")
 
     return render(
         request,
-        "publicaciones/crear_publicacion.html"
+        "publicaciones/crear_publicacion.html",
+        {"form": form}
     )
 
 
@@ -445,6 +506,7 @@ def calificar_publicacion(request, publicacion_id):
 # ==========================================
 
 @login_required
+
 def editar_publicacion(request, id):
 
     publicacion = get_object_or_404(
@@ -456,8 +518,11 @@ def editar_publicacion(request, id):
 
         publicacion.titulo = request.POST["titulo"]
         publicacion.descripcion = request.POST["descripcion"]
-        publicacion.autor_id = request.POST["autor"]
-        publicacion.estado = request.POST["estado"]
+
+        nueva_imagen = request.FILES.get("url_imagen")
+
+        if nueva_imagen:
+            publicacion.url_imagen = nueva_imagen
 
         publicacion.save()
 
@@ -473,7 +538,6 @@ def editar_publicacion(request, id):
         "publicaciones/editar_publicacion.html",
         {"publicacion": publicacion}
     )
-
 
 # ==========================================
 # ELIMINAR PUBLICACIÓN
@@ -611,3 +675,101 @@ def cerrar_sesion(request):
     logout(request)
 
     return redirect("lista_publicaciones")
+
+# ==========================================
+# MENSAJES
+# ==========================================
+@login_required
+def lista_mensajes(request):
+
+    autor_actual = get_object_or_404(
+        Autor,
+        usuario=request.user
+    )
+
+    autores = Autor.objects.exclude(id=autor_actual.id)
+
+    # Mantener la lógica para iniciar una conversación
+    if request.method == "GET":
+        remitente_id = request.GET.get("remitente")
+        destinatario_id = request.GET.get("destinatario")
+
+        if remitente_id and destinatario_id:
+            remitente = get_object_or_404(Autor, id=remitente_id)
+            destinatario = get_object_or_404(Autor, id=destinatario_id)
+
+            if remitente == autor_actual and remitente != destinatario:
+                return redirect(
+                    "conversacion",
+                    autor1_id=remitente_id,
+                    autor2_id=destinatario_id
+                )
+
+    # Buscar las conversaciones existentes
+    conversaciones = []
+
+    for autor in autores:
+
+        ultimo_mensaje = Mensaje.objects.filter(
+            Q(remitente=autor_actual, destinatario=autor) |
+            Q(remitente=autor, destinatario=autor_actual)
+        ).order_by("-fecha_envio", "-id").first()
+
+        if ultimo_mensaje:
+
+            mensajes_sin_leer = Mensaje.objects.filter(
+                remitente=autor,
+                destinatario=autor_actual,
+                visto=False
+            ).count()
+
+            conversaciones.append({
+                "autor": autor,
+                "ultimo_mensaje": ultimo_mensaje,
+                "mensajes_sin_leer": mensajes_sin_leer
+            })
+
+    # Ordenar por el mensaje más reciente
+    conversaciones.sort(
+        key=lambda x: x["ultimo_mensaje"].fecha_envio,
+        reverse=True
+    )
+
+    return render(
+        request,
+        "mensajes/lista_mensajes.html",
+        {
+            "autores": autores,
+            "autor_actual": autor_actual,
+            "conversaciones": conversaciones
+        }
+    )
+
+@login_required
+def conversacion(request,autor_id):
+    autor_actual= get_object_or_404(Autor,usuario = request.user)
+    destinatario = get_object_or_404(Autor,id= autor_id)
+
+    if autor_actual == destinatario:
+        return redirect("lista_mensajes")
+
+    mensajes = Mensaje.objects.filter(
+        models.Q(remitente=autor_actual,destinatario=destinatario)|
+        models.Q(remitente=destinatario,destinatario=autor_actual)
+    ).order_by("fecha_envio")
+
+
+
+    if request.method == "POST":
+        contenido = request.POST.get("contenido","").strip()
+
+        if contenido:
+            Mensaje.objects.create(
+                remitente = autor_actual,
+                destinatario= destinatario,
+                contenido = contenido
+            )
+            return redirect("conversacion",autor_id=destinatario.id)
+    mensajes.filter(destinatario= autor_actual,visto = False).update(visto = True)
+    
+    return render(request,"mensajes/conversacion.html",{"autor_actual":autor_actual,"destinatario":destinatario,"mensajes":mensajes})

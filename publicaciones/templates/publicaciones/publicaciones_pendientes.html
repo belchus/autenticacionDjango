@@ -1,0 +1,243 @@
+
+{% extends "publicaciones/base.html" %}
+
+{% block title %}
+Publicaciones pendientes
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .panel-moderacion {
+        max-width: 1100px;
+        margin: 45px auto;
+        padding: 20px;
+    }
+
+    .panel-header {
+        margin-bottom: 35px;
+    }
+
+    .panel-header h1 {
+        font-size: 30px;
+        font-weight: 700;
+        color: #252525;
+        margin-bottom: 8px;
+    }
+
+    .panel-header p {
+        color: #777;
+        margin: 0;
+    }
+
+    .pendientes-contador {
+        display: inline-block;
+        background: #fff3cd;
+        color: #856404;
+        padding: 7px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-top: 15px;
+    }
+
+    .publicacion-pendiente {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 22px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.06);
+        border: 1px solid #eee;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .publicacion-pendiente:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.09);
+    }
+
+    .publicacion-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .publicacion-top h2 {
+        font-size: 21px;
+        font-weight: 700;
+        color: #252525;
+        margin: 0;
+    }
+
+    .estado-pendiente {
+        background: #fff3cd;
+        color: #856404;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .publicacion-descripcion {
+        color: #666;
+        line-height: 1.7;
+        margin-bottom: 20px;
+        white-space: pre-line;
+    }
+
+    .publicacion-autor {
+        color: #888;
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+
+    .acciones-moderacion {
+        display: flex;
+        gap: 12px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+
+    .btn-aprobar,
+    .btn-rechazar {
+        border: none;
+        padding: 10px 22px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-aprobar {
+        background: #198754;
+        color: white;
+    }
+
+    .btn-aprobar:hover {
+        background: #146c43;
+    }
+
+    .btn-rechazar {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-rechazar:hover {
+        background: #bb2d3b;
+    }
+
+    .panel-vacio {
+        background: white;
+        padding: 55px 25px;
+        text-align: center;
+        border-radius: 15px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+    }
+
+    .panel-vacio h3 {
+        color: #252525;
+        font-size: 22px;
+        margin-bottom: 10px;
+    }
+
+    .panel-vacio p {
+        color: #777;
+        margin: 0;
+    }
+
+    @media (max-width: 576px) {
+        .panel-moderacion {
+            padding: 12px;
+        }
+
+        .acciones-moderacion {
+            flex-direction: column;
+        }
+
+        .acciones-moderacion button {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="panel-moderacion">
+
+    <div class="panel-header">
+
+        <h1>Panel de moderación</h1>
+
+        <p>Revisá las publicaciones enviadas por los autores antes de que aparezcan en el blog.</p>
+
+        <span class="pendientes-contador">
+            {{ publicaciones|length }} publicaciones pendientes
+        </span>
+
+    </div>
+
+    {% for publicacion in publicaciones %}
+
+        <div class="publicacion-pendiente">
+
+            <div class="publicacion-top">
+
+                <h2>{{ publicacion.titulo }}</h2>
+
+                <span class="estado-pendiente">
+                    Pendiente de revisión
+                </span>
+
+            </div>
+
+            <div class="publicacion-descripcion">
+                {{ publicacion.descripcion }}
+            </div>
+
+            <div class="publicacion-autor">
+                Publicado por:
+                <strong>
+                    {{ publicacion.autor.username }}
+                </strong>
+                · {{ publicacion.fecha_creacion|date:"d/m/Y H:i" }}
+            </div>
+
+            <div class="acciones-moderacion">
+
+                <form method="POST"
+                      action="{% url 'revisar_publicacion' publicacion.id %}">
+                    {% csrf_token %}
+
+                    <button type="submit"
+                            name="accion"
+                            value="aprobar"
+                            class="btn-aprobar">
+                        ✓ Aprobar publicación
+                    </button>
+
+                    <button type="submit"
+                            name="accion"
+                            value="rechazar"
+                            class="btn-rechazar">
+                        ✕ Rechazar publicación
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    {% empty %}
+
+        <div class="panel-vacio">
+            <h3>¡Todo al día!</h3>
+            <p>No hay publicaciones pendientes de aprobación.</p>
+        </div>
+
+    {% endfor %}
+
+</div>
+
+{% endblock %}

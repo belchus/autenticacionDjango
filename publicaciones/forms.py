@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
-from publicaciones.models import Autor, Calificacion, Comentario, Publicacion
+from publicaciones.models import Autor, Calificacion, Comentario, Mensaje, Publicacion
 
 User = get_user_model()
 
@@ -22,7 +22,6 @@ class PublicacionForm(forms.ModelForm):
         fields = [
             "titulo",
             "descripcion",
-            "estado",
             "url_imagen"
         ]
 
@@ -59,7 +58,7 @@ class ComentarioForm(forms.ModelForm):
             })
         }
 
-from django import forms
+
 
 
 class CalificacionForm(forms.Form):
@@ -177,4 +176,29 @@ class RegistroForm(UserCreationForm):
             )
 
         return usuario
+    
+class MensajeForm(forms.ModelForm):
+    class Meta:
+        model = Mensaje 
+        fields = [
+            "remitente",
+            "destinatario",
+            "contenido"
+        ]
+
+        widgets = {
+            "remitente" : forms.Select(attrs={"class":"form-control"}),
+            "destinatario": forms.Select(attrs={"class":"form-control"}),
+            "contenido": forms.Textarea(attrs={"class":"form-control","placeholder":"Escribi tu mensaje","rows":3})
+        }
+    def clean(self):
+        cleaned_data = super().clean()
+        remitente = cleaned_data.get("remitente")
+        destinatario = cleaned_data.get("destinatario")
+        
+        if remitente and destinatario and remitente == destinatario:
+            raise forms.ValidationError(
+                "No podes mandarte mensajes a vos mismo"
+            )
+        return cleaned_data
     

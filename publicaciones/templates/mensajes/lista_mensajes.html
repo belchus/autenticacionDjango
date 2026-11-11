@@ -1,0 +1,315 @@
+
+{% extends "publicaciones/base.html" %}
+
+{% block title %}Mensajes{% endblock %}
+
+{% block content %}
+
+<style>
+    .bandeja-container {
+        max-width: 1000px;
+        margin: 40px auto;
+        padding: 25px;
+    }
+
+    .bandeja-header {
+        margin-bottom: 35px;
+    }
+
+    .bandeja-header h1 {
+        font-weight: 700;
+        color: #252525;
+    }
+
+    .bandeja-header p {
+        color: #777;
+        margin-top: 8px;
+    }
+
+    .contactos-seccion,
+    .conversaciones-seccion {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.06);
+        margin-bottom: 30px;
+    }
+
+    .contactos-seccion h3,
+    .conversaciones-seccion h3 {
+        font-size: 19px;
+        margin-bottom: 22px;
+        font-weight: 600;
+    }
+
+    .contactos-lista {
+        display: flex;
+        gap: 25px;
+        flex-wrap: wrap;
+    }
+
+    .contacto {
+        text-decoration: none;
+        color: #333;
+        text-align: center;
+        width: 85px;
+        transition: transform 0.2s;
+    }
+
+    .contacto:hover {
+        transform: translateY(-5px);
+        color: #0d6efd;
+    }
+
+    .avatar {
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #e5e7eb;
+        padding: 2px;
+        background: white;
+        flex-shrink: 0;
+    }
+
+    .contacto .avatar {
+        width: 75px;
+        height: 75px;
+    }
+
+    .contacto:hover .avatar {
+        border-color: #0d6efd;
+    }
+
+    .avatar-placeholder {
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        background: #e9efff;
+        color: #3159a5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 25px;
+        font-weight: bold;
+        border: 3px solid #e5e7eb;
+        flex-shrink: 0;
+    }
+
+    .contacto .avatar-placeholder {
+        width: 75px;
+        height: 75px;
+        margin: auto;
+    }
+
+    .contacto-nombre {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin-top: 9px;
+        overflow-wrap: anywhere;
+    }
+
+    /* LISTA DE CONVERSACIONES */
+
+    .lista-conversaciones {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .conversacion-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px 10px;
+        text-decoration: none;
+        color: #333;
+        border-bottom: 1px solid #eee;
+        transition: background 0.2s;
+    }
+
+    .conversacion-item:last-child {
+        border-bottom: none;
+    }
+
+    .conversacion-item:hover {
+        background: #f7f9fc;
+        color: #333;
+    }
+
+    .conversacion-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .conversacion-info strong {
+        font-size: 15px;
+        color: #252525;
+    }
+
+    .conversacion-info p {
+        color: #777;
+        font-size: 14px;
+        margin: 5px 0 0;
+        overflow-wrap: anywhere;
+    }
+
+    .conversacion-fecha {
+        color: #999;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .mensajes-no-leidos {
+        background: #0d6efd;
+        color: white;
+        min-width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+        padding: 0 5px;
+    }
+
+    .bandeja-vacia {
+        padding: 35px 20px;
+        text-align: center;
+        color: #777;
+    }
+
+    .bandeja-vacia h4 {
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    @media (max-width: 576px) {
+        .bandeja-container {
+            padding: 12px;
+        }
+
+        .contactos-seccion,
+        .conversaciones-seccion {
+            padding: 18px;
+        }
+
+        .conversacion-fecha {
+            display: none;
+        }
+    }
+</style>
+
+<div class="bandeja-container">
+
+    <div class="bandeja-header">
+        <h1>Mensajes</h1>
+        <p>Conectate y conversá con otros autores.</p>
+    </div>
+
+    <!-- CONTACTOS PARA INICIAR UNA CONVERSACIÓN -->
+
+    <div class="contactos-seccion">
+
+        <h3>Iniciar una conversación</h3>
+
+        <div class="contactos-lista">
+
+            {% for autor in autores %}
+
+                <a href="{% url 'conversacion' autor.id %}" class="contacto">
+
+                    {% if autor.imagen %}
+                        <img src="{{ autor.imagen.url }}"
+                             alt="{{ autor.username }}"
+                             class="avatar">
+                    {% else %}
+                        <div class="avatar-placeholder">
+                            {{ autor.username|first|upper }}
+                        </div>
+                    {% endif %}
+
+                    <span class="contacto-nombre">
+                        {{ autor.username }}
+                    </span>
+
+                </a>
+
+            {% empty %}
+
+                <p class="text-muted">
+                    Todavía no hay otros autores disponibles.
+                </p>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+    <!-- CONVERSACIONES EXISTENTES -->
+
+    <div class="conversaciones-seccion">
+
+        <h3>Mis conversaciones</h3>
+
+        <div class="lista-conversaciones">
+
+            {% for conversacion in conversaciones %}
+
+                <a href="{% url 'conversacion' conversacion.autor.id %}"
+                   class="conversacion-item">
+
+                    {% if conversacion.autor.imagen %}
+                        <img src="{{ conversacion.autor.imagen.url }}"
+                             alt="{{ conversacion.autor.username }}"
+                             class="avatar">
+                    {% else %}
+                        <div class="avatar-placeholder">
+                            {{ conversacion.autor.username|first|upper }}
+                        </div>
+                    {% endif %}
+
+                    <div class="conversacion-info">
+
+                        <strong>{{ conversacion.autor.username }}</strong>
+
+                        <p>
+                            {% if conversacion.ultimo_mensaje.remitente_id == autor_actual.id %}
+                                Vos:
+                            {% endif %}
+
+                            {{ conversacion.ultimo_mensaje.contenido|truncatechars:50 }}
+                        </p>
+
+                    </div>
+
+                    <small class="conversacion-fecha">
+                        {{ conversacion.ultimo_mensaje.fecha_envio|date:"d/m H:i" }}
+                    </small>
+
+                    {% if conversacion.mensajes_sin_leer > 0 %}
+                        <span class="mensajes-no-leidos">
+                            {{ conversacion.mensajes_sin_leer }}
+                        </span>
+                    {% endif %}
+
+                </a>
+
+            {% empty %}
+
+                <div class="bandeja-vacia">
+                    <h4>No tenés conversaciones todavía</h4>
+                    <p>Elegí un autor de arriba para comenzar a conversar.</p>
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

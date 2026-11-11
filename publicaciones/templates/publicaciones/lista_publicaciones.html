@@ -1,132 +1,658 @@
+
 {% extends "publicaciones/base.html" %}
 
 {% block title %}Publicaciones | Glups{% endblock %}
 
 {% block content %}
+
+<style>
+    .publicaciones-section {
+        max-width: 1150px;
+        margin: 45px auto;
+        padding: 20px;
+    }
+
+    /* ENCABEZADO */
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 35px;
+    }
+
+    .section-header h1 {
+        font-size: 36px;
+        font-weight: 800;
+        color: #252525;
+        margin-bottom: 10px;
+    }
+
+    .section-header p {
+        color: #777;
+        font-size: 16px;
+    }
+
+    /* FILTROS */
+
+    .filtros-container {
+        background: white;
+        padding: 22px;
+        border-radius: 14px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+        margin-bottom: 25px;
+        border: 1px solid #eee;
+    }
+
+    .filtros-form {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 15px;
+        align-items: end;
+    }
+
+    .filtro-grupo {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .filtro-grupo label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #444;
+    }
+
+    .filtro-grupo input,
+    .filtro-grupo select {
+        padding: 11px 13px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        outline: none;
+        background: #fff;
+        width: 100%;
+    }
+
+    .filtro-grupo input:focus,
+    .filtro-grupo select:focus {
+        border-color: #3159a5;
+        box-shadow: 0 0 0 3px rgba(49,89,165,0.1);
+    }
+
+    .btn-filtrar {
+        background: #252525;
+        color: white;
+        padding: 11px 18px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-filtrar:hover {
+        background: #444;
+    }
+
+    .limpiar-filtros {
+        display: inline-block;
+        color: #777;
+        text-decoration: none;
+        font-size: 13px;
+        margin-top: 15px;
+    }
+
+    .limpiar-filtros:hover {
+        color: #3159a5;
+    }
+
+    /* ACCIONES */
+
+    .section-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin: 25px 0;
+    }
+
+    .btn-nueva {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        background: #3159a5;
+        color: white;
+        padding: 12px 19px;
+        border-radius: 9px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: 0.2s;
+    }
+
+    .btn-nueva:hover {
+        background: #24447f;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    /* TARJETAS DEL BLOG */
+
+    .publicaciones-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 25px;
+    }
+
+    .publicacion-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        border: 1px solid #eee;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        transition: transform 0.25s, box-shadow 0.25s;
+    }
+
+    .publicacion-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 9px 25px rgba(0,0,0,0.09);
+    }
+
+    .publicacion-imagen {
+        width: 100%;
+        height: 235px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .imagen-placeholder {
+        height: 235px;
+        background: linear-gradient(135deg, #e9efff, #dce5f5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #3159a5;
+        font-size: 45px;
+    }
+
+    .publicacion-card-content {
+        padding: 22px;
+    }
+
+    .publicacion-categoria {
+        color: #3159a5;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+    }
+
+    .publicacion-card h3 {
+        font-size: 22px;
+        font-weight: 750;
+        line-height: 1.35;
+        color: #252525;
+        margin-bottom: 12px;
+    }
+
+    .publicacion-descripcion {
+        color: #666;
+        font-size: 14px;
+        line-height: 1.7;
+        margin-bottom: 18px;
+    }
+
+    /* AUTOR Y FECHA */
+
+    .publicacion-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        color: #888;
+        font-size: 12px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .publicacion-autor {
+        font-weight: 600;
+        color: #555;
+    }
+
+    /* CALIFICACIONES */
+
+    .publicacion-rating {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 15px 0;
+        font-size: 13px;
+    }
+
+    .rating-estrellas {
+        color: #ffc107;
+        font-size: 19px;
+        letter-spacing: 1px;
+    }
+
+    .rating-numero {
+        color: #444;
+        font-weight: 700;
+    }
+
+    .rating-cantidad {
+        color: #999;
+    }
+
+    .sin-rating {
+        color: #999;
+        font-size: 13px;
+        margin: 15px 0;
+    }
+
+    /* ESTADO Y BOTONES */
+
+    .publicacion-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    .publicacion-estado {
+        padding: 6px 11px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        background: #eee;
+        color: #555;
+    }
+
+    .estado-publicado {
+        background: #d1e7dd;
+        color: #146c43;
+    }
+
+    .estado-borrador {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .estado-archivado {
+        background: #f8d7da;
+        color: #842029;
+    }
+
+    .publicacion-acciones {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: 0.2s;
+    }
+
+    .btn-ver {
+        background: #e9efff;
+        color: #3159a5;
+    }
+
+    .btn-editar {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .btn-eliminar {
+        background: #f8d7da;
+        color: #dc3545;
+    }
+
+    .btn-ver:hover {
+        background: #3159a5;
+        color: white;
+    }
+
+    .btn-editar:hover {
+        background: #ffc107;
+        color: #252525;
+    }
+
+    .btn-eliminar:hover {
+        background: #dc3545;
+        color: white;
+    }
+
+    .form-eliminar {
+        margin: 0;
+    }
+
+    /* SIN PUBLICACIONES */
+
+    .empty-state {
+        background: white;
+        padding: 60px 25px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+    }
+
+    .empty-state h3 {
+        color: #252525;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        color: #888;
+    }
+
+    /* RESPONSIVE */
+
+    @media (max-width: 850px) {
+        .filtros-form {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .publicaciones-list {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .publicaciones-section {
+            padding: 12px;
+        }
+
+        .filtros-form {
+            grid-template-columns: 1fr;
+        }
+
+        .section-header h1 {
+            font-size: 29px;
+        }
+
+        .publicacion-footer {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .publicacion-acciones {
+            align-self: flex-end;
+        }
+    }
+</style>
+
 <section class="publicaciones-section">
 
     <header class="section-header">
-        <h2>Publicaciones</h2>
-        <p>Descubrí las últimas publicaciones de Glups.</p>
+        <h1>Publicaciones</h1>
+        <p>Descubrí las últimas historias, ideas y novedades de Glups.</p>
     </header>
 
-    <form method="GET">
-        <label for="buscar">Buscar por titulo</label>
-        <input type="text" id="buscar" name="buscar" placeholder="Escribi un titulo.." value="{{ busqueda|default:''}}">
+    <!-- FILTROS -->
 
-        <label for="estado">Filtrar por estado:</label>
-        <select name="estado" id="estado">
-            <option value="">Todos los estados</option>
-            <option value="borrador"{% if estado == "borrador"%}selected {% endif %}>Borrador</option>
-            <option value="publicado"{% if estado == "publicado"%}selected {% endif %}>Publicado</option>
-            <option value="archivado"{% if estado == "archivado"%}selected {% endif %}>Archivado</option>
-        </select>
-        <label for="orden">Ordenar por fecha</label>
-        <select name="orden" id="orden">
-            <option value="reciente" {% if orden == "reciente" %} selected {% endif %}>Mas recientes</option>
-            <option value="antiguo" {% if orden == "antiguo" %} selected {% endif %}>Mas antiguos</option>
-        </select>
-        <button type="submit">Aplicar filtros</button>
-        <a href="{% url 'lista_publicaciones' %}">Limpiar filtros</a>
-    </form>
-    <div class="section-actions">
-        <a href="{% url 'crear_publicacion' %}" class="btn-nueva">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>Nueva publicación</span>
+    <div class="filtros-container">
+
+        <form method="GET" class="filtros-form">
+
+            <div class="filtro-grupo">
+                <label for="buscar">Buscar publicación</label>
+                <input type="text"
+                       id="buscar"
+                       name="buscar"
+                       placeholder="Escribí un título..."
+                       value="{{ busqueda|default:'' }}">
+            </div>
+
+            <div class="filtro-grupo">
+                <label for="estado">Estado</label>
+                <select name="estado" id="estado">
+                    <option value="">Todos los estados</option>
+
+                    <option value="borrador"
+                        {% if estado == "borrador" %}selected{% endif %}>
+                        Borrador
+                    </option>
+
+                    <option value="publicado"
+                        {% if estado == "publicado" %}selected{% endif %}>
+                        Publicado
+                    </option>
+
+                    <option value="archivado"
+                        {% if estado == "archivado" %}selected{% endif %}>
+                        Archivado
+                    </option>
+                </select>
+            </div>
+
+            <div class="filtro-grupo">
+                <label for="orden">Ordenar por fecha</label>
+                <select name="orden" id="orden">
+
+                    <option value="reciente"
+                        {% if orden == "reciente" %}selected{% endif %}>
+                        Más recientes
+                    </option>
+
+                    <option value="antiguo"
+                        {% if orden == "antiguo" %}selected{% endif %}>
+                        Más antiguos
+                    </option>
+
+                </select>
+            </div>
+
+            <button type="submit" class="btn-filtrar">
+                Aplicar filtros
+            </button>
+
+        </form>
+
+        <a href="{% url 'lista_publicaciones' %}" class="limpiar-filtros">
+            Limpiar filtros
         </a>
+
     </div>
 
+    <!-- NUEVA PUBLICACIÓN -->
+
+    <div class="section-actions">
+
+        <a href="{% url 'crear_publicacion' %}" class="btn-nueva">
+            <span>＋</span>
+            Nueva publicación
+        </a>
+
+    </div>
+
+    <!-- LISTADO -->
+
     {% if publicaciones %}
+
         <div class="publicaciones-list">
 
             {% for publicacion in publicaciones %}
-            <article class="publicacion-card">
-        
-                <div class="publicacion-card-content">
-                    <h3>{{ publicacion.titulo }}</h3>
-        
-                    <p class="publicacion-descripcion">
-                        {{ publicacion.descripcion }}
-                    </p>
-        
-                    <div class="publicacion-meta">
-                        <span class="publicacion-autor">
-                            Por {{ publicacion.autor.username }}
-                        </span>
-        
-                        <span class="publicacion-fecha">
-                            {{ publicacion.fecha_creacion|date:"d/m/Y" }}
-                        </span>
-                    </div>
-        
-                    <div class="publicacion-footer">
-                        {% if publicacion.estado %}
-                            <span class="publicacion-estado">
-                                {{ publicacion.get_estado_display }}
-                            </span>
-                        {% endif %}
-        
-                        <div class="publicacion-acciones">
-                            <!-- Ver -->
-                            <a href="{% url 'detalle_publicacion' publicacion.id %}"
-                               class="btn-icon btn-ver"
-                               title="Ver publicación"
-                               aria-label="Ver publicación">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
-                            </a>
-        
-                            <!-- Editar -->
-                            <a href="{% url 'editar_publicacion' publicacion.id %}"
-                               class="btn-icon btn-editar"
-                               title="Editar publicación"
-                               aria-label="Editar publicación">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M12 20h9"></path>
-                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                                </svg>
-                            </a>
-        
-                            <!-- Eliminar -->
-                            <form action="{% url 'eliminar_publicacion' publicacion.id %}"
-                                  method="POST"
-                                  class="form-eliminar"
-                                  onsubmit="return confirm('¿Seguro que querés eliminar esta publicación?');">
-                                {% csrf_token %}
-                                <button type="submit"
-                                        class="btn-icon btn-eliminar"
-                                        title="Eliminar publicación"
-                                        aria-label="Eliminar publicación">
-                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" >
-                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                                        <path d="M10 11v6"></path>
-                                        <path d="M14 11v6"></path>
-                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-                                    </svg>
-                                </button>
-                            </form>
+
+                <article class="publicacion-card">
+
+                    <!-- IMAGEN -->
+
+                    {% if publicacion.url_imagen %}
+
+                        <img src="{{ publicacion.url_imagen.url }}"
+                             alt="{{ publicacion.titulo }}"
+                             class="publicacion-imagen">
+
+                    {% else %}
+
+                        <div class="imagen-placeholder">
+                            ✎
                         </div>
+
+                    {% endif %}
+
+                    <div class="publicacion-card-content">
+
+                       
+
+                        <h3><a  href="{% url 'detalle_publicacion' publicacion.id %}" >{{ publicacion.titulo }}</a></h3>
+
+                        <p class="publicacion-descripcion">
+                            {{ publicacion.descripcion|truncatewords:25 }}
+                        </p>
+
+                        <!-- AUTOR Y FECHA -->
+
+                        <div class="publicacion-meta">
+
+                            <span class="publicacion-autor">
+                                Por {{ publicacion.autor.username }}
+                            </span>
+
+                            <span>
+                                {{ publicacion.fecha_creacion|date:"d/m/Y" }}
+                            </span>
+
+                        </div>
+
+                        <!-- CALIFICACIÓN -->
+
+                        {% if publicacion.cantidad_calificaciones > 0 %}
+
+                            <div class="publicacion-rating">
+
+                                <span class="rating-estrellas">
+                                    ★★★★★
+                                </span>
+
+                                <span class="rating-numero">
+                                    {{ publicacion.promedio_calificacion|floatformat:1 }}
+                                </span>
+
+                                <span class="rating-cantidad">
+                                    ({{ publicacion.cantidad_calificaciones }}
+                                    {% if publicacion.cantidad_calificaciones == 1 %}
+                                        valoración
+                                    {% else %}
+                                        valoraciones
+                                    {% endif %})
+                                </span>
+
+                            </div>
+
+                        {% else %}
+
+                            <div class="sin-rating">
+                                Todavía no tiene valoraciones.
+                            </div>
+
+                        {% endif %}
+
+                        <!-- ESTADO Y ACCIONES -->
+
+                        <div class="publicacion-footer">
+
+                            {% if publicacion.estado == "publicado" %}
+
+                                <span class="publicacion-estado estado-publicado">
+                                    Publicado
+                                </span>
+
+                            {% elif publicacion.estado == "borrador" %}
+
+                                <span class="publicacion-estado estado-borrador">
+                                    Pendiente de aprobación
+                                </span>
+
+                            {% else %}
+
+                                <span class="publicacion-estado estado-archivado">
+                                    Archivado
+                                </span>
+
+                            {% endif %}
+
+                            <div class="publicacion-acciones">
+
+                                <!-- VER -->
+
+                                
+
+                                <!-- EDITAR -->
+
+                                <a href="{% url 'editar_publicacion' publicacion.id %}"
+                                   class="btn-icon btn-editar"
+                                   title="Editar publicación">
+
+                                    <svg viewBox="0 0 24 24"
+                                         width="18"
+                                         height="18"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         stroke-width="2">
+                                        <path d="M12 20h9"></path>
+                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                    </svg>
+
+                                </a>
+
+                                <!-- ELIMINAR -->
+
+                                <form action="{% url 'eliminar_publicacion' publicacion.id %}"
+                                      method="POST"
+                                      class="form-eliminar"
+                                      onsubmit="return confirm('¿Seguro que querés eliminar esta publicación?');">
+
+                                    {% csrf_token %}
+
+                                    <button type="submit"
+                                            class="btn-icon btn-eliminar"
+                                            title="Eliminar publicación">
+
+                                        <svg viewBox="0 0 24 24"
+                                             width="18"
+                                             height="18"
+                                             fill="none"
+                                             stroke="currentColor"
+                                             stroke-width="2">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                                            <path d="M10 11v6"></path>
+                                            <path d="M14 11v6"></path>
+                                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                                        </svg>
+
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        </div>
+
                     </div>
-                </div>
-        
-            </article>
-   
+
+                </article>
+
             {% endfor %}
 
         </div>
 
     {% else %}
+
         <div class="empty-state">
             <h3>Aún no hay publicaciones</h3>
             <p>Cuando haya contenido disponible, aparecerá en esta sección.</p>
         </div>
+
     {% endif %}
 
 </section>
+
 {% endblock %}

@@ -1,84 +1,592 @@
-{% extends "publicaciones/base.html" %}
-{% block title %}
-Autores
-{% endblock %}
-{% block content %}    
 
-<h2>{{autor.username}}</h2>
-<p>{{autor.nombre}} {{autor.apellido}} </p>
-{% if autor.imagen %}
-<img src="{{autor.imagen.url}}" alt="">
-{% endif %}
-{% if user.is_authenticated and user.id == autor.usuario_id %}
-<a href="{% url 'editar_perfil' autor.id %}">Editar perfil</a>
-<a href="{% url 'cambiar_contraseña' %}">Cambiar contraseña</a>
-{% endif %}
-{% if publicaciones %}
-<span>{{publicaciones | length}} posts {{publicaciones | length | pluralize}}</span>
-{% endif %}
-<div>
-    <h2>Posts de {{autor.username }}</h2>
-    {%if publicaciones%}
-        {% for publicacion in publicaciones %}
-        <h4>{{publicacion.titulo}}</h4>
-        <p>{{publicacion.descripcion}}</p>
-    
-        <div class="publicacion-footer">
-            {% if publicacion.estado %}
-                <span class="publicacion-estado">
-                    {{ publicacion.get_estado_display }}
-                </span>
+{% extends "publicaciones/base.html" %}
+
+{% block title %}
+Perfil de {{ autor.username }} | Glups
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .perfil-container {
+        max-width: 1100px;
+        margin: 45px auto;
+        padding: 20px;
+    }
+
+    /* PERFIL DEL AUTOR */
+
+    .perfil-header {
+        background: white;
+        border-radius: 18px;
+        padding: 35px;
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+        border: 1px solid #eee;
+        margin-bottom: 45px;
+    }
+
+    .perfil-avatar {
+        width: 145px;
+        height: 145px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid #e9efff;
+        flex-shrink: 0;
+    }
+
+    .perfil-avatar-placeholder {
+        width: 145px;
+        height: 145px;
+        border-radius: 50%;
+        background: #e9efff;
+        color: #3159a5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 55px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .perfil-info {
+        flex: 1;
+    }
+
+    .perfil-info h1 {
+        font-size: 30px;
+        font-weight: 800;
+        color: #252525;
+        margin-bottom: 5px;
+    }
+
+    .perfil-username {
+        color: #3159a5;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+
+    .perfil-nombre {
+        color: #777;
+        margin-bottom: 18px;
+    }
+
+    .perfil-estadisticas {
+        display: flex;
+        gap: 25px;
+        margin-bottom: 20px;
+    }
+
+    .perfil-estadistica strong {
+        font-size: 20px;
+        color: #252525;
+    }
+
+    .perfil-estadistica span {
+        display: block;
+        font-size: 12px;
+        color: #888;
+    }
+
+    .perfil-acciones {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-perfil {
+        display: inline-block;
+        padding: 10px 17px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: 0.2s;
+    }
+
+    .btn-editar-perfil {
+        background: #3159a5;
+        color: white;
+    }
+
+    .btn-editar-perfil:hover {
+        background: #24447f;
+        color: white;
+    }
+
+    .btn-password {
+        background: #f0f2f5;
+        color: #444;
+    }
+
+    .btn-password:hover {
+        background: #e0e4e9;
+        color: #252525;
+    }
+
+    /* SECCIÓN DE PUBLICACIONES */
+
+    .posts-header {
+        margin-bottom: 25px;
+    }
+
+    .posts-header h2 {
+        font-size: 26px;
+        font-weight: 750;
+        color: #252525;
+        margin-bottom: 5px;
+    }
+
+    .posts-header p {
+        color: #888;
+        font-size: 14px;
+    }
+
+    .posts-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 25px;
+    }
+
+    .post-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        border: 1px solid #eee;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        transition: 0.25s;
+    }
+
+    .post-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 22px rgba(0,0,0,0.09);
+    }
+
+    .post-imagen {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .post-imagen-placeholder {
+        height: 220px;
+        background: linear-gradient(135deg, #e9efff, #dce5f5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #3159a5;
+        font-size: 45px;
+    }
+
+    .post-contenido {
+        padding: 22px;
+    }
+
+    .post-fecha {
+        font-size: 12px;
+        color: #3159a5;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .post-contenido h3 {
+        font-size: 21px;
+        font-weight: 750;
+        color: #252525;
+        margin-bottom: 12px;
+    }
+
+    .post-descripcion {
+        font-size: 14px;
+        color: #777;
+        line-height: 1.7;
+        margin-bottom: 18px;
+    }
+
+    /* ESTADOS */
+
+    .publicacion-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+    }
+
+    .publicacion-estado {
+        padding: 6px 11px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        background: #eee;
+        color: #555;
+    }
+
+    .estado-publicado {
+        background: #d1e7dd;
+        color: #146c43;
+    }
+
+    .estado-borrador {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .estado-archivado {
+        background: #f8d7da;
+        color: #842029;
+    }
+
+    /* ACCIONES DE PUBLICACIÓN */
+
+    .publicacion-acciones {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: 0.2s;
+    }
+
+    .btn-ver {
+        background: #e9efff;
+        color: #3159a5;
+    }
+
+    .btn-editar {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .btn-eliminar {
+        background: #f8d7da;
+        color: #dc3545;
+    }
+
+    .btn-ver:hover {
+        background: #3159a5;
+        color: white;
+    }
+
+    .btn-editar:hover {
+        background: #ffc107;
+        color: #252525;
+    }
+
+    .btn-eliminar:hover {
+        background: #dc3545;
+        color: white;
+    }
+
+    .form-eliminar {
+        margin: 0;
+    }
+
+    /* PERFIL SIN PUBLICACIONES */
+
+    .posts-vacios {
+        background: white;
+        padding: 55px 25px;
+        text-align: center;
+        border-radius: 15px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+    }
+
+    .posts-vacios h3 {
+        color: #252525;
+        margin-bottom: 10px;
+    }
+
+    .posts-vacios p {
+        color: #888;
+    }
+
+    /* RESPONSIVE */
+
+    @media (max-width: 750px) {
+        .perfil-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .perfil-estadisticas,
+        .perfil-acciones {
+            justify-content: center;
+        }
+
+        .posts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .perfil-container {
+            padding: 12px;
+        }
+
+        .perfil-header {
+            padding: 25px 15px;
+        }
+
+        .perfil-info h1 {
+            font-size: 25px;
+        }
+
+        .publicacion-footer {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .publicacion-acciones {
+            align-self: flex-end;
+        }
+    }
+</style>
+
+<div class="perfil-container">
+
+    <!-- CABECERA DEL PERFIL -->
+
+    <section class="perfil-header">
+
+        {% if autor.imagen %}
+
+            <img src="{{ autor.imagen.url }}"
+                 alt="{{ autor.username }}"
+                 class="perfil-avatar">
+
+        {% else %}
+
+            <div class="perfil-avatar-placeholder">
+                {{ autor.username|first|upper }}
+            </div>
+
+        {% endif %}
+
+        <div class="perfil-info">
+
+            <h1>{{ autor.username }}</h1>
+
+            <div class="perfil-username">
+                Perfil de autor
+            </div>
+
+            <p class="perfil-nombre">
+                {{ autor.nombre }} {{ autor.apellido }}
+            </p>
+
+            <div class="perfil-estadisticas">
+
+                <div class="perfil-estadistica">
+                    <strong>{{ publicaciones|length }}</strong>
+                    <span>
+                        {% if publicaciones|length == 1 %}
+                            Publicación
+                        {% else %}
+                            Publicaciones
+                        {% endif %}
+                    </span>
+                </div>
+
+            </div>
+
+            {% if user.is_authenticated and user.id == autor.usuario_id %}
+
+                <div class="perfil-acciones">
+
+                    <a href="{% url 'editar_perfil' autor.id %}"
+                       class="btn-perfil btn-editar-perfil">
+                        Editar perfil
+                    </a>
+
+                    <a href="{% url 'cambiar_contraseña' %}"
+                       class="btn-perfil btn-password">
+                        Cambiar contraseña
+                    </a>
+
+                </div>
+
             {% endif %}
 
-            <div class="publicacion-acciones">
-                <!-- Ver -->
-                <a href="{% url 'detalle_publicacion' publicacion.id %}"
-                   class="btn-icon btn-ver"
-                   title="Ver publicación"
-                   aria-label="Ver publicación">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                </a>
-                {% if user.is_authenticated and publicacion.autor.usuario_id == user.id %}
-
-                <!-- Editar -->
-                <a href="{% url 'editar_publicacion' publicacion.id %}"
-                   class="btn-icon btn-editar"
-                   title="Editar publicación"
-                   aria-label="Editar publicación">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M12 20h9"></path>
-                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                    </svg>
-                </a>
-
-                <!-- Eliminar -->
-                <form action="{% url 'eliminar_publicacion' publicacion.id %}"
-                      method="POST"
-                      class="form-eliminar"
-                      onsubmit="return confirm('¿Seguro que querés eliminar esta publicación?');">
-                    {% csrf_token %}
-                    <button type="submit"
-                            class="btn-icon btn-eliminar"
-                            title="Eliminar publicación"
-                            aria-label="Eliminar publicación">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" >
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                            <path d="M10 11v6"></path>
-                            <path d="M14 11v6"></path>
-                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-                        </svg>
-                    </button>
-                </form>
-                {% endif %}
-            </div>
         </div>
-        {% endfor%}
-    {% else %}
-    <div>Este autor todavia no publico nada</div>
-    {% endif %}
+
+    </section>
+
+    <!-- PUBLICACIONES DEL AUTOR -->
+
+    <section>
+
+        <div class="posts-header">
+            <h2>Publicaciones de {{ autor.username }}</h2>
+            <p>Historias y contenidos compartidos por este autor.</p>
+        </div>
+
+        {% if publicaciones %}
+
+            <div class="posts-grid">
+
+                {% for publicacion in publicaciones %}
+
+                    <article class="post-card">
+
+                        <!-- IMAGEN -->
+
+                        {% if publicacion.url_imagen %}
+
+                            <img src="{{ publicacion.url_imagen.url }}"
+                                 alt="{{ publicacion.titulo }}"
+                                 class="post-imagen">
+
+                        {% else %}
+
+                            <div class="post-imagen-placeholder">
+                                ✎
+                            </div>
+
+                        {% endif %}
+
+                        <div class="post-contenido">
+
+                            <div class="post-fecha">
+                                {{ publicacion.fecha_creacion|date:"d/m/Y" }}
+                            </div>
+
+                            <h3>{{ publicacion.titulo }}</h3>
+
+                            <p class="post-descripcion">
+                                {{ publicacion.descripcion|truncatewords:25 }}
+                            </p>
+
+                            <div class="publicacion-footer">
+
+                                {% if publicacion.estado == "publicado" %}
+
+                                    <span class="publicacion-estado estado-publicado">
+                                        Publicado
+                                    </span>
+
+                                {% elif publicacion.estado == "borrador" %}
+
+                                    <span class="publicacion-estado estado-borrador">
+                                        Pendiente de aprobación
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="publicacion-estado estado-archivado">
+                                        Archivado
+                                    </span>
+
+                                {% endif %}
+
+                                <div class="publicacion-acciones">
+
+                                    <!-- VER -->
+
+                                    <a href="{% url 'detalle_publicacion' publicacion.id %}"
+                                       class="btn-icon btn-ver"
+                                       title="Ver publicación">
+
+                                        <svg viewBox="0 0 24 24"
+                                             width="18"
+                                             height="18"
+                                             fill="none"
+                                             stroke="currentColor"
+                                             stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+
+                                    </a>
+
+                                    {% if user.is_authenticated and publicacion.autor.usuario_id == user.id %}
+
+                                        <!-- EDITAR -->
+
+                                        <a href="{% url 'editar_publicacion' publicacion.id %}"
+                                           class="btn-icon btn-editar"
+                                           title="Editar publicación">
+
+                                            <svg viewBox="0 0 24 24"
+                                                 width="18"
+                                                 height="18"
+                                                 fill="none"
+                                                 stroke="currentColor"
+                                                 stroke-width="2">
+                                                <path d="M12 20h9"></path>
+                                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                            </svg>
+
+                                        </a>
+
+                                        <!-- ELIMINAR -->
+
+                                        <form action="{% url 'eliminar_publicacion' publicacion.id %}"
+                                              method="POST"
+                                              class="form-eliminar"
+                                              onsubmit="return confirm('¿Seguro que querés eliminar esta publicación?');">
+
+                                            {% csrf_token %}
+
+                                            <button type="submit"
+                                                    class="btn-icon btn-eliminar"
+                                                    title="Eliminar publicación">
+
+                                                <svg viewBox="0 0 24 24"
+                                                     width="18"
+                                                     height="18"
+                                                     fill="none"
+                                                     stroke="currentColor"
+                                                     stroke-width="2">
+                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                                                    <path d="M10 11v6"></path>
+                                                    <path d="M14 11v6"></path>
+                                                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                                                </svg>
+
+                                            </button>
+
+                                        </form>
+
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="posts-vacios">
+                <h3>Este autor todavía no publicó nada</h3>
+                <p>Cuando comparta su primera publicación, aparecerá acá.</p>
+            </div>
+
+        {% endif %}
+
+    </section>
+
 </div>
+
 {% endblock %}
